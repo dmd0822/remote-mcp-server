@@ -39,7 +39,7 @@ var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-$
 // User assigned managed identity to be used by the function app to reach storage and service bus
 module apiUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
   name: 'apiUserAssignedIdentity'
-  scope: resourceGroup('resourceGroupName')
+  scope: resourceGroup(resourceGroupName)
   params: {
     location: location
     tags: tags
@@ -50,7 +50,7 @@ module apiUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
 // The application backend is a function app
 module appServicePlan './core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
-  scope: resourceGroup('resourceGroupName')
+  scope: resourceGroup(resourceGroupName)
   params: {
     name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
     location: location
@@ -64,7 +64,7 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
 
 module api './app/api.bicep' = {
   name: 'api'
-  scope: resourceGroup('resourceGroupName')
+  scope: resourceGroup(resourceGroupName)
   params: {
     name: functionAppName
     location: location
