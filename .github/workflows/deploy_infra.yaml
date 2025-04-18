@@ -1,5 +1,9 @@
 name: Deploy Infrastructure
 
+permissions:
+      id-token: write
+      contents: read
+      
 on:
   push:
     paths:
