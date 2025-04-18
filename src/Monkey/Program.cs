@@ -1,5 +1,7 @@
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Monkey.Services;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -9,5 +11,8 @@ builder.ConfigureFunctionsWebApplication();
 // builder.Services
 //     .AddApplicationInsightsTelemetryWorkerService()
 //     .ConfigureFunctionsApplicationInsights();
+
+builder.EnableMcpToolMetadata();
+builder.Services.AddSingleton<MonkeyService>();
 
 builder.Build().Run();
