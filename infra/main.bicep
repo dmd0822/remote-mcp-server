@@ -1,4 +1,4 @@
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 @minLength(1)
 @maxLength(64)
@@ -32,16 +32,14 @@ var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSite
 var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
 
 // Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
-  location: location
-  tags: tags
-}
+// resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+//   name: resourceGroupName
+// }
 
 // User assigned managed identity to be used by the function app to reach storage and service bus
 module apiUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
   name: 'apiUserAssignedIdentity'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     location: location
     tags: tags
@@ -52,7 +50,7 @@ module apiUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
 // The application backend is a function app
 module appServicePlan './core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
     location: location
@@ -66,7 +64,7 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
 
 module api './app/api.bicep' = {
   name: 'api'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     name: functionAppName
     location: location
@@ -88,7 +86,7 @@ module api './app/api.bicep' = {
 // Backing storage for Azure functions api
 module storage './core/storage/storage-account.bicep' = {
   name: 'storage'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
     location: location
@@ -107,7 +105,7 @@ var StorageQueueDataContributor = '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
 // Allow access from api to blob storage using a managed identity
 module blobRoleAssignmentApi 'app/storage-Access.bicep' = {
   name: 'blobRoleAssignmentapi'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     storageAccountName: storage.outputs.name
     roleDefinitionID: StorageBlobDataOwner
@@ -118,7 +116,7 @@ module blobRoleAssignmentApi 'app/storage-Access.bicep' = {
 // Allow access from api to queue storage using a managed identity
 module queueRoleAssignmentApi 'app/storage-Access.bicep' = {
   name: 'queueRoleAssignmentapi'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     storageAccountName: storage.outputs.name
     roleDefinitionID: StorageQueueDataContributor
@@ -129,7 +127,7 @@ module queueRoleAssignmentApi 'app/storage-Access.bicep' = {
 // Virtual Network & private endpoint to blob storage
 module serviceVirtualNetwork 'app/vnet.bicep' =  if (vnetEnabled) {
   name: 'serviceVirtualNetwork'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     location: location
     tags: tags
@@ -139,7 +137,7 @@ module serviceVirtualNetwork 'app/vnet.bicep' =  if (vnetEnabled) {
 
 module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnabled) {
   name: 'servicePrivateEndpoint'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     location: location
     tags: tags
@@ -152,7 +150,7 @@ module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnab
 // Monitor application with Azure Monitor
 module monitoring './core/monitor/monitoring.bicep' = {
   name: 'monitoring'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     location: location
     tags: tags
@@ -167,7 +165,7 @@ var monitoringRoleDefinitionId = '3913510d-42f4-4e42-8a64-420c390055eb' // Monit
 // Allow access from api to application insights using a managed identity
 module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = {
   name: 'appInsightsRoleAssignmentapi'
-  scope: rg
+  scope: resourceGroup('resourceGroupName')
   params: {
     appInsightsName: monitoring.outputs.applicationInsightsName
     roleDefinitionID: monitoringRoleDefinitionId
