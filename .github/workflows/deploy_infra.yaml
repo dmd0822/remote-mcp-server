@@ -1,14 +1,14 @@
 name: Deploy Infrastructure
 
 permissions:
-      id-token: write
-      contents: read
-      
+  id-token: write
+  contents: read
+
 on:
   push:
     paths:
-      - 'infra/**'
-      - '.github/workflows/deploy_infra.yaml'
+      - "infra/**"
+      - ".github/workflows/deploy_infra.yaml"
   workflow_dispatch:
 
 jobs:
@@ -16,27 +16,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Login to Azure
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Install AZD
-      run: |
-        curl -fsSL https://aka.ms/install-azd.sh | bash
-      working-directory: infra
-
-    - name: Deploy infrastructure
-      env:
-        AZURE_LOCATION: 'eastus2'
-        AZURE_ENV_NAME: 'production'
-        VNET_ENABLED: False
-        AZURE_RESOURCE_GROUP_NAME: 'rg-mcp-demo'
-      run: |
-        azd provision --environment production
-      working-directory: infra
+      - name: Deploy Bicep templates
+        env:
+          AZURE_LOCATION: "eastus2"
+          AZURE_RESOURCE_GROUP_NAME: "rg-mcp-demo"
+        run: |
+          az deployment group create --resource-group $AZURE_RESOURCE_GROUP_NAME --template-file main.bicep --parameters dev-parameters.json
+        working-directory: infra
