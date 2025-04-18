@@ -55,3 +55,4 @@ nunit-*.xml
 
 notes.txt
 credential.json
+publishProfile.json
